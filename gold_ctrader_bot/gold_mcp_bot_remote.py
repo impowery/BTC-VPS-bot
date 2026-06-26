@@ -1147,14 +1147,11 @@ class GoldMCPRemoteBot:
             if time_since_last_scale >= SCALE_IN_COOLDOWN_SEC:
                 pnl_pct = self.get_current_pnl_pct(price)
                 if pnl_pct > -0.5:
-                    can_scale = (self.is_short and price <= self.ema and price < avg) or \
-                                (not self.is_short and price >= self.ema and price > avg)
-                    if len(self.entries) == 2:
-                        if self.is_short and price >= self.entries[0]["price"]:
-                            can_scale = False
-                        if not self.is_short and price <= self.entries[0]["price"]:
-                            can_scale = False
-                    if can_scale:
+                    distance_ok = abs(price - avg) >= 0.5 * self.atr
+                    not_overextended = abs(price - self.ema) < 1.5 * self.atr
+                    can_scale = (self.is_short and price >= self.ema and price > avg) or \
+                                (not self.is_short and price <= self.ema and price < avg)
+                    if can_scale and distance_ok and not_overextended:
                         self.last_scale_in_time = now_ms
                         await self.open_entry("sell" if self.is_short else "buy", price, balance)
 
